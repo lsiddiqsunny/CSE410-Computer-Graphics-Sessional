@@ -20,7 +20,8 @@ struct point
         y=b;
         z=c;
     }
-    point(){
+    point()
+    {
     }
 };
 
@@ -49,12 +50,14 @@ void drawAxes()
 void drawSquare(double a)
 {
     //glColor3f(1.0,0.0,0.0);
-	glBegin(GL_QUADS);{
-		glVertex3f( a, a,0);
-		glVertex3f( a,-a,0);
-		glVertex3f(-a,-a,0);
-		glVertex3f(-a, a,0);
-	}glEnd();
+    glBegin(GL_QUADS);
+    {
+        glVertex3f( a, a,0);
+        glVertex3f( a,-a,0);
+        glVertex3f(-a,-a,0);
+        glVertex3f(-a, a,0);
+    }
+    glEnd();
 }
 
 
@@ -176,39 +179,49 @@ void specialKeyListener(int key, int x,int y)
     case GLUT_KEY_DOWN:		//down arrow key
         pos.x-=l.x*2;
         pos.y-=l.y*2;
+        pos.z-=l.z*2;
         break;
     case GLUT_KEY_UP:		// up arrow key
         pos.x+=l.x*2;
         pos.y+=l.y*2;
+        pos.z+=l.z*2;
         break;
 
     case GLUT_KEY_RIGHT:
         pos.x+=r.x*2;
         pos.y+=r.y*2;
+        pos.z+=r.z*2;
         break;
     case GLUT_KEY_LEFT:
         pos.x-=r.x*2;
         pos.y-=r.y*2;
+        pos.z-=r.z*2;
         break;
 
     case GLUT_KEY_PAGE_UP:
-        pos.z+=2;
+        pos.x+=u.x*2;
+        pos.y+=u.y*2;
+        pos.z+=u.z*2;
         break;
     case GLUT_KEY_PAGE_DOWN:
-        pos.z-=2;
+        pos.x-=u.x*2;
+        pos.y-=u.y*2;
+        pos.z-=u.z*2;
         break;
 
     case GLUT_KEY_INSERT:
         break;
 
     case GLUT_KEY_HOME:
-		    cubeLengths += 0.5;
-		    if(cubeLengths > 20) cubeLengths = 20;
-			break;
+        cubeLengths += 1.0;
+        if(cubeLengths > 40)
+            cubeLengths = 40;
+        break;
     case GLUT_KEY_END:
-            cubeLengths -= 0.5;
-		    if(cubeLengths < 0) cubeLengths = 0;
-    break;
+        cubeLengths -= 1.0;
+        if(cubeLengths < 0)
+            cubeLengths = 0;
+        break;
 
     default:
         break;
@@ -242,384 +255,398 @@ void mouseListener(int button, int state, int x, int y) 	//x, y is the x-y of th
 
 void drawSphere(double radius,int slices,int stacks)
 {
-	struct point points[100][100];
-	int i,j;
-	double h,r;
-	//generate points
-	for(i=0;i<=stacks;i++)
-	{
-		h=radius*sin(((double)i/(double)stacks)*(pi/2));
-		r=radius*cos(((double)i/(double)stacks)*(pi/2));
-		for(j=0;j<=slices;j++)
-		{
-			points[i][j].x=r*cos(((double)j/(double)slices)*2*pi);
-			points[i][j].y=r*sin(((double)j/(double)slices)*2*pi);
-			points[i][j].z=h;
-		}
-	}
-	//draw quads using generated points
-	for(i=0;i<stacks;i++)
-	{
+    struct point points[100][100];
+    int i,j;
+    double h,r;
+    //generate points
+    for(i=0; i<=stacks; i++)
+    {
+        h=radius*sin(((double)i/(double)stacks)*(pi/2));
+        r=radius*cos(((double)i/(double)stacks)*(pi/2));
+        for(j=0; j<=slices; j++)
+        {
+            points[i][j].x=r*cos(((double)j/(double)slices)*2*pi);
+            points[i][j].y=r*sin(((double)j/(double)slices)*2*pi);
+            points[i][j].z=h;
+        }
+    }
+    //draw quads using generated points
+    for(i=0; i<stacks; i++)
+    {
         glColor3f((double)i/(double)stacks,(double)i/(double)stacks,(double)i/(double)stacks);
-		for(j=0;j<slices;j++)
-		{
-			glBegin(GL_QUADS);{
-			    //upper hemisphere
-				glVertex3f(points[i][j].x,points[i][j].y,points[i][j].z);
-				glVertex3f(points[i][j+1].x,points[i][j+1].y,points[i][j+1].z);
-				glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,points[i+1][j+1].z);
-				glVertex3f(points[i+1][j].x,points[i+1][j].y,points[i+1][j].z);
+        for(j=0; j<slices; j++)
+        {
+            glBegin(GL_QUADS);
+            {
+                //upper hemisphere
+                glVertex3f(points[i][j].x,points[i][j].y,points[i][j].z);
+                glVertex3f(points[i][j+1].x,points[i][j+1].y,points[i][j+1].z);
+                glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,points[i+1][j+1].z);
+                glVertex3f(points[i+1][j].x,points[i+1][j].y,points[i+1][j].z);
                 //lower hemisphere
                 glVertex3f(points[i][j].x,points[i][j].y,-points[i][j].z);
-				glVertex3f(points[i][j+1].x,points[i][j+1].y,-points[i][j+1].z);
-				glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,-points[i+1][j+1].z);
-				glVertex3f(points[i+1][j].x,points[i+1][j].y,-points[i+1][j].z);
-			}glEnd();
-		}
-	}
+                glVertex3f(points[i][j+1].x,points[i][j+1].y,-points[i][j+1].z);
+                glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,-points[i+1][j+1].z);
+                glVertex3f(points[i+1][j].x,points[i+1][j].y,-points[i+1][j].z);
+            }
+            glEnd();
+        }
+    }
 }
 
 void drawQuarterSpere(double radius)
 {
     int slices = 100;
-    int stacks = 95;
-    struct point points[100][100];
-	int i,j;
-	double h,r;
-	//generate points
-	for(i=0;i<=stacks;i++)
-	{
-		h=radius*sin(((double)i/(double)stacks)*(pi/2));
-		r=radius*cos(((double)i/(double)stacks)*(pi/2));
-		for(j=0;j<=slices;j++)
-		{
-			points[i][j].x=r*cos(((double)j/(double)slices)*0.5*pi);
-			points[i][j].y=r*sin(((double)j/(double)slices)*0.5*pi);
-			points[i][j].z=h;
-		}
-	}
-	//draw quads using generated points
-	glColor3f(1, 0, 0);
-	for(i=0;i<stacks;i++)
-	{
-		for(j=0;j<slices;j++)
-		{
-			glBegin(GL_QUADS);{
-			    //upper hemisphere
-				glVertex3f(points[i][j].x,points[i][j].y,points[i][j].z);
-				glVertex3f(points[i][j+1].x,points[i][j+1].y,points[i][j+1].z);
-				glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,points[i+1][j+1].z);
-				glVertex3f(points[i+1][j].x,points[i+1][j].y,points[i+1][j].z);
-			}glEnd();
-		}
-	}
-}
-
-void drawQuarterSpereDown(double radius)
-{
-    int slices = 100;
-    int stacks = 95;
-    struct point points[100][100];
-	int i,j;
-	double h,r;
-	//generate points
-	for(i=0;i<=stacks;i++)
-	{
-		h=radius*sin(((double)i/(double)stacks)*(pi/2));
-		r=radius*cos(((double)i/(double)stacks)*(pi/2));
-		for(j=0;j<=slices;j++)
-		{
-			points[i][j].x=r*cos(((double)j/(double)slices)*0.5*pi);
-			points[i][j].y=r*sin(((double)j/(double)slices)*0.5*pi);
-			points[i][j].z=h;
-		}
-	}
-	//draw quads using generated points
-    glColor3f(1,0,0);
-	for(i=0;i<stacks;i++)
-	{
-		for(j=0;j<slices;j++)
-		{
-			glBegin(GL_QUADS);{
-			    //lower hemisphere
-                glVertex3f(points[i][j].x,points[i][j].y,-points[i][j].z);
-				glVertex3f(points[i][j+1].x,points[i][j+1].y,-points[i][j+1].z);
-				glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,-points[i+1][j+1].z);
-				glVertex3f(points[i+1][j].x,points[i+1][j].y,-points[i+1][j].z);
-			}glEnd();
-		}
-	}
+    int stacks = 100;
+    struct point points[stacks+5][slices+5];
+    int i,j;
+    double h,r;
+    //generate points
+    for(i=0; i<=stacks; i++)
+    {
+        h=radius*sin(((double)i/(double)stacks)*(pi/2));
+        r=radius*cos(((double)i/(double)stacks)*(pi/2));
+        for(j=0; j<=slices; j++)
+        {
+            points[i][j].x=r*cos(((double)j/(double)slices)*0.5*pi);
+            points[i][j].y=r*sin(((double)j/(double)slices)*0.5*pi);
+            points[i][j].z=h;
+        }
+    }
+    //draw quads using generated points
+    /// glColor3f(1, 0, 0);
+    for(i=0; i<stacks; i++)
+    {
+        for(j=0; j<slices; j++)
+        {
+            glBegin(GL_QUADS);
+            {
+                //upper hemisphere
+                glVertex3f(points[i][j].x,points[i][j].y,points[i][j].z);
+                glVertex3f(points[i][j+1].x,points[i][j+1].y,points[i][j+1].z);
+                glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,points[i+1][j+1].z);
+                glVertex3f(points[i+1][j].x,points[i+1][j].y,points[i+1][j].z);
+            }
+            glEnd();
+        }
+    }
 }
 
 
 void drawCylinderPart()
 {
     int i,j;
-    int segments = 50;
-    int stacks = 50;
-    double radius = 20-cubeLengths;
+    int segments = 100;
+    int stacks = 100;
+    double radius = 40-cubeLengths;
     double length = cubeLengths;
-    struct point points[100][100];
-    glColor3f(0,1,0);
+    struct point points[stacks+5][segments+5];
+    ///glColor3f(0,1,0);
     //generate points
-    for(i=0;i<=stacks;i++)
-	{
-        for(j=0;j<=segments;j++)
+    for(i=0; i<=stacks; i++)
+    {
+        for(j=0; j<=segments; j++)
+        {
+            points[i][j].x=radius*cos(((double)j/(double)segments)*0.5*pi);
+            points[i][j].z=radius*sin(((double)j/(double)segments)*0.5*pi);
+            points[i][j].y = length - 2*length * i / stacks;
+        }
+    }
+    //draw quads using generated points
+    for(i=0; i<stacks; i++)
+    {
+        for(j=0; j<segments; j++)
+        {
+            glBegin(GL_QUADS);
             {
-                points[i][j].x=radius*cos(((double)j/(double)segments)*0.5*pi);
-                points[i][j].z=radius*sin(((double)j/(double)segments)*0.5*pi);
-                points[i][j].y = length - 2*length * i / stacks;
-            }
-	}
-	//draw quads using generated points
-	for(i=0;i<stacks;i++)
-	{
-		for(j=0;j<segments;j++)
-		{
-			glBegin(GL_QUADS);{
-			    //upper hemisphere
-				glVertex3f(points[i][j].x,points[i][j].y,points[i][j].z);
-				glVertex3f(points[i][j+1].x,points[i][j+1].y,points[i][j+1].z);
-				glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,points[i+1][j+1].z);
-				glVertex3f(points[i+1][j].x,points[i+1][j].y,points[i+1][j].z);
+                //upper hemisphere
+                glVertex3f(points[i][j].x,points[i][j].y,points[i][j].z);
+                glVertex3f(points[i][j+1].x,points[i][j+1].y,points[i][j+1].z);
+                glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,points[i+1][j+1].z);
+                glVertex3f(points[i+1][j].x,points[i+1][j].y,points[i+1][j].z);
 //                //lower hemisphere
 //                glVertex3f(points[i][j].x,points[i][j].y,-points[i][j].z);
 //				glVertex3f(points[i][j+1].x,points[i][j+1].y,-points[i][j+1].z);
 //				glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,-points[i+1][j+1].z);
 //				glVertex3f(points[i+1][j].x,points[i+1][j].y,-points[i+1][j].z);
-			}glEnd();
-		}
-	}
-}
-
-void drawCylinderPartDown()
-{
-    int i,j;
-    int segments = 50;
-    int stacks = 50;
-    double radius = 20-cubeLengths;
-    double length = cubeLengths;
-    struct point points[100][100];
-    glColor3f(0,1,0);
-    //generate points
-    for(i=0;i<=stacks;i++)
-	{
-        for(j=0;j<=segments;j++)
-            {
-                points[i][j].x=radius*cos(((double)j/(double)segments)*0.5*pi);
-                points[i][j].z=radius*sin(((double)j/(double)segments)*0.5*pi);
-                points[i][j].y = length - 2*length * i / stacks;
             }
-	}
-	//draw quads using generated points
-	for(i=0;i<stacks;i++)
-	{
-		for(j=0;j<segments;j++)
-		{
-			glBegin(GL_QUADS);{
-                //lower hemisphere
-                glVertex3f(points[i][j].x,points[i][j].y,-points[i][j].z);
-				glVertex3f(points[i][j+1].x,points[i][j+1].y,-points[i][j+1].z);
-				glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,-points[i+1][j+1].z);
-				glVertex3f(points[i+1][j].x,points[i+1][j].y,-points[i+1][j].z);
-			}glEnd();
-		}
-	}
+            glEnd();
+        }
+    }
 }
 
 
+void drawingCube()
+{
+    glColor3f(1,1,1);
+    {
+        /// draw two sides parallel to xz plane
+
+        glPushMatrix();
+        glTranslated(-40,0,0);
+        glRotated(90,0,1,0);
+        drawSquare(cubeLengths);
+        glPopMatrix();
+
+        glPushMatrix();
+        glTranslated(40,0,0);
+        glRotated(90,0,1,0);
+        drawSquare(cubeLengths);
+        glPopMatrix();
+
+    }
+    {
+        /// draw two sides parallel to yz plane
+        ///  glColor3f(0,1,0);
+        glPushMatrix();
+        glTranslated(0,-40,0);
+        glRotated(90,1,0,0);
+        drawSquare(cubeLengths);
+        glPopMatrix();
+
+
+        glPushMatrix();
+        glTranslated(0,40,0);
+        glRotated(90,1,0,0);
+        drawSquare(cubeLengths);
+        glPopMatrix();
+
+
+    }
+
+
+    {
+        /// draw two sides parallel to xy plane
+        /// glColor3f(0,0,1);
+        glPushMatrix();
+        glTranslated(0,0,-40);
+        drawSquare(cubeLengths);
+        glPopMatrix();
+
+        glPushMatrix();
+        glTranslated(0,0,40);
+        drawSquare(cubeLengths);
+        glPopMatrix();
+    }
+
+
+
+}
+
+void drawingSpher()
+{
+
+    glColor3f(1,0,0);
+
+    {
+        glPushMatrix();
+        glTranslatef(cubeLengths,cubeLengths,cubeLengths);
+        drawQuarterSpere(40-cubeLengths);
+        glPopMatrix();
+
+    }
+    {
+        glPushMatrix();
+        glTranslatef(-cubeLengths,cubeLengths,cubeLengths);
+        glRotatef(90, 0, 0, 1);
+        drawQuarterSpere(40-cubeLengths);
+        glPopMatrix();
+
+    }
+
+
+    {
+        glPushMatrix();
+        glTranslatef(-cubeLengths,-cubeLengths,cubeLengths);
+        glRotatef(180, 0, 0, 1);
+        drawQuarterSpere(40-cubeLengths);
+        glPopMatrix();
+    }
+
+
+    {
+        glPushMatrix();
+        glTranslatef(cubeLengths,-cubeLengths,cubeLengths);
+        glRotatef(270, 0, 0, 1);
+        drawQuarterSpere(40-cubeLengths);
+        glPopMatrix();
+
+    }
+    {
+        glPushMatrix();
+        glTranslatef(cubeLengths,cubeLengths,-cubeLengths);
+        glRotatef(90, 0, 1, 0);
+        drawQuarterSpere(40-cubeLengths);
+        glPopMatrix();
+    }
+
+
+
+
+    {
+        glPushMatrix();
+        glTranslatef(-cubeLengths,cubeLengths,-cubeLengths);
+        glRotatef(90, 0, 0, 1);
+        glRotatef(90, 0, 1, 0);
+        drawQuarterSpere(40-cubeLengths);
+        glPopMatrix();
+
+    }
+
+
+
+    {
+        glPushMatrix();
+        glTranslatef(-cubeLengths,-cubeLengths,-cubeLengths);
+        glRotatef(180, 0, 0, 1);
+        glRotatef(90, 0, 1, 0);
+        drawQuarterSpere(40-cubeLengths);
+        glPopMatrix();
+    }
+
+
+    {
+        glPushMatrix();
+        glTranslatef(cubeLengths,-cubeLengths,-cubeLengths);
+        glRotatef(270, 0, 0, 1);
+        glRotatef(90, 0, 1, 0);
+        drawQuarterSpere(40-cubeLengths);
+        glPopMatrix();
+
+    }
+
+
+}
+
+void drawingCylinder()
+{
+    glColor3f(0,1,0);
+    {
+        glPushMatrix();
+        glTranslatef(cubeLengths,0,cubeLengths);
+        drawCylinderPart();
+        glPopMatrix();
+    }
+
+    {
+        glPushMatrix();
+
+        glTranslatef(cubeLengths,0,-cubeLengths);
+        glRotated(90,0,1,0);
+        drawCylinderPart();
+
+        glPopMatrix();
+
+    }
+
+    {
+        glPushMatrix();
+
+        glTranslatef(0,cubeLengths,cubeLengths);
+        glRotatef(90, 0,0,1);
+        drawCylinderPart();
+
+        glPopMatrix();
+
+    }
+
+    {
+        glPushMatrix();
+        glTranslatef(0,cubeLengths,-cubeLengths);
+        glRotatef(90, 0,0,1);
+        glRotated(90,0,1,0);
+        drawCylinderPart();
+
+        glPopMatrix();
+    }
+    {
+        glPushMatrix();
+        glTranslatef(cubeLengths,cubeLengths,0);
+        glRotatef(90, 1,0,0);
+        glRotated(90,0,1,0);
+        drawCylinderPart();
+
+
+        glPopMatrix();
+    }
+    {
+        glPushMatrix();
+
+        glTranslatef(-cubeLengths,0,cubeLengths);
+        glRotatef(180, 0,0,1);
+        drawCylinderPart();
+
+        glPopMatrix();
+
+    }
+    {
+        glPushMatrix();
+
+        glTranslatef(-cubeLengths,0,-cubeLengths);
+        glRotatef(180, 0,0,1);
+        glRotated(90,0,1,0);
+        drawCylinderPart();
+
+        glPopMatrix();
+
+    }
+    {
+        glPushMatrix();
+
+        glTranslatef(0,-cubeLengths,cubeLengths);
+        glRotatef(270, 0,0,1);
+        drawCylinderPart();
+
+        glPopMatrix();
+    }
+    {
+        glPushMatrix();
+        glTranslatef(0,-cubeLengths,-cubeLengths);
+        glRotatef(270, 0,0,1);
+        glRotated(90,0,1,0);
+        drawCylinderPart();
+
+        glPopMatrix();
+
+    }
+    {
+        glPushMatrix();
+        glTranslatef(-cubeLengths,cubeLengths,0);
+        glRotatef(180, 0,0,1);
+        glRotatef(90, 1,0,0);
+        drawCylinderPart();
+
+        glPopMatrix();
+    }
+    {
+        glPushMatrix();
+        glTranslatef(-cubeLengths,-cubeLengths,0);
+        glRotatef(270, 0,0,1);
+        glRotatef(90, 1,0,0);
+        drawCylinderPart();
+
+        glPopMatrix();
+
+    }
+    {
+        glTranslatef(cubeLengths,-cubeLengths,0);
+        glRotatef(-90, 0,0,1);
+        glRotatef(90, 1,0,0);
+        glRotated(90,0,1,0);
+        drawCylinderPart();
+        glPopMatrix();
+
+    }
+
+
+
+
+}
 void drawProblem1()
 {
-
-    //starting the cube parts
-    {
-    glColor3f(1,1,1);
-
-    glPushMatrix();
-    glTranslatef(0,0,20);
-    drawSquare(cubeLengths);
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(0,0,-20);
-    drawSquare(cubeLengths);
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glColor3f(1,1,1);
-    glTranslatef(0,20,0);
-    glRotatef(90, 1, 0, 0);
-    drawSquare(cubeLengths);
-
-    glPopMatrix();
-    glPushMatrix();
-
-
-    glTranslatef(0,-20,0);
-    glRotatef(90, 1, 0, 0);
-    drawSquare(cubeLengths);
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glColor3f(1,1,1);
-    glTranslatef(20,0,0);
-    glRotatef(90, 0, 1, 0);
-    drawSquare(cubeLengths);
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(-20,0,0);
-    glRotatef(90, 0, 1, 0);
-    drawSquare(cubeLengths);
-
-
-    }
-
-    //Starting the sphere parts
-    {
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(cubeLengths,cubeLengths,cubeLengths);
-    drawQuarterSpere(20-cubeLengths);
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(-cubeLengths,cubeLengths,cubeLengths);
-    glRotatef(90, 0, 0, 1);
-    drawQuarterSpere(20-cubeLengths);
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(-cubeLengths,-cubeLengths,cubeLengths);
-    glRotatef(180, 0, 0, 1);
-    drawQuarterSpere(20-cubeLengths);
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(cubeLengths,-cubeLengths,cubeLengths);
-    glRotatef(-90, 0, 0, 1);
-    drawQuarterSpere(20-cubeLengths);
-
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(cubeLengths,cubeLengths,-cubeLengths);
-    drawQuarterSpereDown(20-cubeLengths);
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(-cubeLengths,cubeLengths,-cubeLengths);
-    glRotatef(90, 0, 0, 1);
-    drawQuarterSpereDown(20-cubeLengths);
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(-cubeLengths,-cubeLengths,-cubeLengths);
-    glRotatef(180, 0, 0, 1);
-    drawQuarterSpereDown(20-cubeLengths);
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(cubeLengths,-cubeLengths,-cubeLengths);
-    glRotatef(-90, 0, 0, 1);
-    drawQuarterSpereDown(20-cubeLengths);
-    }
-
-
-    //drawing the cylinder parts
-    {
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(cubeLengths,0,cubeLengths);
-    drawCylinderPart();
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(cubeLengths,0,-cubeLengths);
-    drawCylinderPartDown();
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(0,cubeLengths,cubeLengths);
-    glRotatef(90, 0,0,1);
-    drawCylinderPart();
-
-    glPopMatrix();
-    glPushMatrix();
-    glTranslatef(0,cubeLengths,-cubeLengths);
-    glRotatef(90, 0,0,1);
-    drawCylinderPartDown();
-
-    glPopMatrix();
-    glPushMatrix();
-    glTranslatef(cubeLengths,cubeLengths,0);
-    glRotatef(90, 1,0,0);
-    drawCylinderPartDown();
-
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(-cubeLengths,0,cubeLengths);
-    glRotatef(180, 0,0,1);
-    drawCylinderPart();
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(-cubeLengths,0,-cubeLengths);
-    glRotatef(180, 0,0,1);
-    drawCylinderPartDown();
-
-    glPopMatrix();
-    glPushMatrix();
-
-    glTranslatef(0,-cubeLengths,cubeLengths);
-    glRotatef(-90, 0,0,1);
-    drawCylinderPart();
-
-    glPopMatrix();
-    glPushMatrix();
-    glTranslatef(0,-cubeLengths,-cubeLengths);
-    glRotatef(-90, 0,0,1);
-    drawCylinderPartDown();
-
-    glPopMatrix();
-    glPushMatrix();
-    glTranslatef(-cubeLengths,cubeLengths,0);
-    glRotatef(180, 0,0,1);
-    glRotatef(90, 1,0,0);
-    drawCylinderPart();
-
-    glPopMatrix();
-    glPushMatrix();
-    glTranslatef(-cubeLengths,-cubeLengths,0);
-    glRotatef(-90, 0,0,1);
-    glRotatef(90, 1,0,0);
-    drawCylinderPart();
-
-    glPopMatrix();
-    glTranslatef(cubeLengths,-cubeLengths,0);
-    glRotatef(-90, 0,0,1);
-    glRotatef(90, 1,0,0);
-    drawCylinderPartDown();
-    }
-
+    drawingCube();
+    drawingSpher();
+    drawingCylinder();
 
 }
 
@@ -688,7 +715,7 @@ void init()
 {
     //codes for initialization
     drawaxes=1;
-    cubeLengths=10;
+    cubeLengths=20;
 
 
     //clear the screen
