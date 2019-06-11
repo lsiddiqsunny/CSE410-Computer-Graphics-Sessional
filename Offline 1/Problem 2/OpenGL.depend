@@ -11,3 +11,15 @@
 	<GL/gl.h>
 	<GL/glu.h>
 
+1560279118 source:d:\level 4 term 1\cse410-computer-graphics-sessional\offline 1\problem 2\main.cpp
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
+	<windows.h>
+	<glut.h>
+
+1392007564 d:\level 4 term 1\cse410-computer-graphics-sessional\offline 1\problem 2\opengl\include\glut.h
+	<windows.h>
+	<GL/gl.h>
+	<GL/glu.h>
+
