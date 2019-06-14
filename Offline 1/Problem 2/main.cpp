@@ -131,10 +131,10 @@ void drawCircle()
 
     glBegin(GL_QUADS);
     {
-        glVertex3f(points[i].x,points[0].y,points[0].z);
-        glVertex3f(points[i].x+8,points[0].y,points[0].z);
-        glVertex3f(points[i].x+8,points[50].y,points[50].z);
-        glVertex3f(points[i].x,points[50].y,points[50].z);
+        glVertex3f(points[i].x+2,points[0].y,points[0].z);
+        glVertex3f(points[i].x+6,points[0].y,points[0].z);
+        glVertex3f(points[i].x+6,points[50].y,points[50].z);
+        glVertex3f(points[i].x+2,points[50].y,points[50].z);
     }
     glEnd();
     glPopMatrix();
@@ -146,10 +146,10 @@ void drawCircle()
 
     glBegin(GL_QUADS);
     {
-        glVertex3f(points[i].x,points[25].y,points[25].z);
-        glVertex3f(points[i].x+8,points[25].y,points[25].z);
-        glVertex3f(points[i].x+8,points[75].y,points[75].z);
-        glVertex3f(points[i].x,points[75].y,points[75].z);
+        glVertex3f(points[i].x+2,points[25].y,points[25].z);
+        glVertex3f(points[i].x+6,points[25].y,points[25].z);
+        glVertex3f(points[i].x+6,points[75].y,points[75].z);
+        glVertex3f(points[i].x+2,points[75].y,points[75].z);
     }
     glEnd();
     glPopMatrix();

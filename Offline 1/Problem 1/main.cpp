@@ -9,7 +9,7 @@
 
 
 int drawaxes;
-double cubeLengths ;
+double Length ;
 
 struct point
 {
@@ -61,50 +61,6 @@ void drawSquare(double a)
 }
 
 
-void drawCube(double a)
-{
-
-
-
-
-    glBegin(GL_QUADS);
-    {
-        glVertex3f( a,-a, -a);
-        glVertex3f( a,a,-a);
-        glVertex3f(a,a,a);
-        glVertex3f(a,-a, a);
-    }
-    glEnd();
-
-    glBegin(GL_QUADS);
-    {
-        glVertex3f( -a,-a, a);
-        glVertex3f( -a,a,a);
-        glVertex3f(-a,a,-a);
-        glVertex3f(-a,-a, -a);
-    }
-    glEnd();
-
-
-    glBegin(GL_QUADS);
-    {
-        glVertex3f( a,a, a);
-        glVertex3f( a,a,-a);
-        glVertex3f(-a,a,-a);
-        glVertex3f(-a,a, a);
-    }
-    glEnd();
-
-    //glColor3f(1.0,0.0,0.0);
-    glBegin(GL_QUADS);
-    {
-        glVertex3f( a,-a, -a);
-        glVertex3f( a,-a,a);
-        glVertex3f(-a,-a,a);
-        glVertex3f(-a,-a, -a);
-    }
-    glEnd();
-}
 void Rotate(point &a,point &b,double angle)
 {
     a.x=a.x*cos(angle)+b.x*sin(angle);
@@ -213,14 +169,14 @@ void specialKeyListener(int key, int x,int y)
         break;
 
     case GLUT_KEY_HOME:
-        cubeLengths += 1.0;
-        if(cubeLengths > 40)
-            cubeLengths = 40;
+        Length += 1.0;
+        if(Length > 40)
+            Length = 40;
         break;
     case GLUT_KEY_END:
-        cubeLengths -= 1.0;
-        if(cubeLengths < 0)
-            cubeLengths = 0;
+        Length -= 1.0;
+        if(Length < 0)
+            Length = 0;
         break;
 
     default:
@@ -253,48 +209,8 @@ void mouseListener(int button, int state, int x, int y) 	//x, y is the x-y of th
     }
 }
 
-void drawSphere(double radius,int slices,int stacks)
-{
-    struct point points[100][100];
-    int i,j;
-    double h,r;
-    //generate points
-    for(i=0; i<=stacks; i++)
-    {
-        h=radius*sin(((double)i/(double)stacks)*(pi/2));
-        r=radius*cos(((double)i/(double)stacks)*(pi/2));
-        for(j=0; j<=slices; j++)
-        {
-            points[i][j].x=r*cos(((double)j/(double)slices)*2*pi);
-            points[i][j].y=r*sin(((double)j/(double)slices)*2*pi);
-            points[i][j].z=h;
-        }
-    }
-    //draw quads using generated points
-    for(i=0; i<stacks; i++)
-    {
-        glColor3f((double)i/(double)stacks,(double)i/(double)stacks,(double)i/(double)stacks);
-        for(j=0; j<slices; j++)
-        {
-            glBegin(GL_QUADS);
-            {
-                //upper hemisphere
-                glVertex3f(points[i][j].x,points[i][j].y,points[i][j].z);
-                glVertex3f(points[i][j+1].x,points[i][j+1].y,points[i][j+1].z);
-                glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,points[i+1][j+1].z);
-                glVertex3f(points[i+1][j].x,points[i+1][j].y,points[i+1][j].z);
-                //lower hemisphere
-                glVertex3f(points[i][j].x,points[i][j].y,-points[i][j].z);
-                glVertex3f(points[i][j+1].x,points[i][j+1].y,-points[i][j+1].z);
-                glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,-points[i+1][j+1].z);
-                glVertex3f(points[i+1][j].x,points[i+1][j].y,-points[i+1][j].z);
-            }
-            glEnd();
-        }
-    }
-}
 
-void drawQuarterSpere(double radius)
+void drawQuarterSphere(double radius)
 {
     int slices = 100;
     int stacks = 100;
@@ -338,8 +254,8 @@ void drawCylinderPart()
     int i,j;
     int segments = 100;
     int stacks = 100;
-    double radius = 40-cubeLengths;
-    double length = cubeLengths;
+    double radius = 40-Length;
+    double length = Length;
     struct point points[stacks+5][segments+5];
     ///glColor3f(0,1,0);
     //generate points
@@ -364,12 +280,7 @@ void drawCylinderPart()
                 glVertex3f(points[i][j+1].x,points[i][j+1].y,points[i][j+1].z);
                 glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,points[i+1][j+1].z);
                 glVertex3f(points[i+1][j].x,points[i+1][j].y,points[i+1][j].z);
-//                //lower hemisphere
-//                glVertex3f(points[i][j].x,points[i][j].y,-points[i][j].z);
-//				glVertex3f(points[i][j+1].x,points[i][j+1].y,-points[i][j+1].z);
-//				glVertex3f(points[i+1][j+1].x,points[i+1][j+1].y,-points[i+1][j+1].z);
-//				glVertex3f(points[i+1][j].x,points[i+1][j].y,-points[i+1][j].z);
-            }
+        }
             glEnd();
         }
     }
@@ -385,13 +296,13 @@ void drawingCube()
         glPushMatrix();
         glTranslated(-40,0,0);
         glRotated(90,0,1,0);
-        drawSquare(cubeLengths);
+        drawSquare(Length);
         glPopMatrix();
 
         glPushMatrix();
         glTranslated(40,0,0);
         glRotated(90,0,1,0);
-        drawSquare(cubeLengths);
+        drawSquare(Length);
         glPopMatrix();
 
     }
@@ -401,14 +312,14 @@ void drawingCube()
         glPushMatrix();
         glTranslated(0,-40,0);
         glRotated(90,1,0,0);
-        drawSquare(cubeLengths);
+        drawSquare(Length);
         glPopMatrix();
 
 
         glPushMatrix();
         glTranslated(0,40,0);
         glRotated(90,1,0,0);
-        drawSquare(cubeLengths);
+        drawSquare(Length);
         glPopMatrix();
 
 
@@ -420,12 +331,12 @@ void drawingCube()
         /// glColor3f(0,0,1);
         glPushMatrix();
         glTranslated(0,0,-40);
-        drawSquare(cubeLengths);
+        drawSquare(Length);
         glPopMatrix();
 
         glPushMatrix();
         glTranslated(0,0,40);
-        drawSquare(cubeLengths);
+        drawSquare(Length);
         glPopMatrix();
     }
 
@@ -433,23 +344,23 @@ void drawingCube()
 
 }
 
-void drawingSpher()
+void drawingSphere()
 {
 
     glColor3f(1,0,0);
 
     {
         glPushMatrix();
-        glTranslatef(cubeLengths,cubeLengths,cubeLengths);
-        drawQuarterSpere(40-cubeLengths);
+        glTranslatef(Length,Length,Length);
+        drawQuarterSphere(40-Length);
         glPopMatrix();
 
     }
     {
         glPushMatrix();
-        glTranslatef(-cubeLengths,cubeLengths,cubeLengths);
+        glTranslatef(-Length,Length,Length);
         glRotatef(90, 0, 0, 1);
-        drawQuarterSpere(40-cubeLengths);
+        drawQuarterSphere(40-Length);
         glPopMatrix();
 
     }
@@ -457,26 +368,26 @@ void drawingSpher()
 
     {
         glPushMatrix();
-        glTranslatef(-cubeLengths,-cubeLengths,cubeLengths);
+        glTranslatef(-Length,-Length,Length);
         glRotatef(180, 0, 0, 1);
-        drawQuarterSpere(40-cubeLengths);
+        drawQuarterSphere(40-Length);
         glPopMatrix();
     }
 
 
     {
         glPushMatrix();
-        glTranslatef(cubeLengths,-cubeLengths,cubeLengths);
+        glTranslatef(Length,-Length,Length);
         glRotatef(270, 0, 0, 1);
-        drawQuarterSpere(40-cubeLengths);
+        drawQuarterSphere(40-Length);
         glPopMatrix();
 
     }
     {
         glPushMatrix();
-        glTranslatef(cubeLengths,cubeLengths,-cubeLengths);
+        glTranslatef(Length,Length,-Length);
         glRotatef(90, 0, 1, 0);
-        drawQuarterSpere(40-cubeLengths);
+        drawQuarterSphere(40-Length);
         glPopMatrix();
     }
 
@@ -485,10 +396,10 @@ void drawingSpher()
 
     {
         glPushMatrix();
-        glTranslatef(-cubeLengths,cubeLengths,-cubeLengths);
+        glTranslatef(-Length,Length,-Length);
         glRotatef(90, 0, 0, 1);
         glRotatef(90, 0, 1, 0);
-        drawQuarterSpere(40-cubeLengths);
+        drawQuarterSphere(40-Length);
         glPopMatrix();
 
     }
@@ -497,20 +408,20 @@ void drawingSpher()
 
     {
         glPushMatrix();
-        glTranslatef(-cubeLengths,-cubeLengths,-cubeLengths);
+        glTranslatef(-Length,-Length,-Length);
         glRotatef(180, 0, 0, 1);
         glRotatef(90, 0, 1, 0);
-        drawQuarterSpere(40-cubeLengths);
+        drawQuarterSphere(40-Length);
         glPopMatrix();
     }
 
 
     {
         glPushMatrix();
-        glTranslatef(cubeLengths,-cubeLengths,-cubeLengths);
+        glTranslatef(Length,-Length,-Length);
         glRotatef(270, 0, 0, 1);
         glRotatef(90, 0, 1, 0);
-        drawQuarterSpere(40-cubeLengths);
+        drawQuarterSphere(40-Length);
         glPopMatrix();
 
     }
@@ -523,7 +434,7 @@ void drawingCylinder()
     glColor3f(0,1,0);
     {
         glPushMatrix();
-        glTranslatef(cubeLengths,0,cubeLengths);
+        glTranslatef(Length,0,Length);
         drawCylinderPart();
         glPopMatrix();
     }
@@ -531,7 +442,7 @@ void drawingCylinder()
     {
         glPushMatrix();
 
-        glTranslatef(cubeLengths,0,-cubeLengths);
+        glTranslatef(Length,0,-Length);
         glRotated(90,0,1,0);
         drawCylinderPart();
 
@@ -542,7 +453,7 @@ void drawingCylinder()
     {
         glPushMatrix();
 
-        glTranslatef(0,cubeLengths,cubeLengths);
+        glTranslatef(0,Length,Length);
         glRotatef(90, 0,0,1);
         drawCylinderPart();
 
@@ -552,7 +463,7 @@ void drawingCylinder()
 
     {
         glPushMatrix();
-        glTranslatef(0,cubeLengths,-cubeLengths);
+        glTranslatef(0,Length,-Length);
         glRotatef(90, 0,0,1);
         glRotated(90,0,1,0);
         drawCylinderPart();
@@ -561,7 +472,7 @@ void drawingCylinder()
     }
     {
         glPushMatrix();
-        glTranslatef(cubeLengths,cubeLengths,0);
+        glTranslatef(Length,Length,0);
         glRotatef(90, 1,0,0);
         glRotated(90,0,1,0);
         drawCylinderPart();
@@ -572,7 +483,7 @@ void drawingCylinder()
     {
         glPushMatrix();
 
-        glTranslatef(-cubeLengths,0,cubeLengths);
+        glTranslatef(-Length,0,Length);
         glRotatef(180, 0,0,1);
         drawCylinderPart();
 
@@ -582,7 +493,7 @@ void drawingCylinder()
     {
         glPushMatrix();
 
-        glTranslatef(-cubeLengths,0,-cubeLengths);
+        glTranslatef(-Length,0,-Length);
         glRotatef(180, 0,0,1);
         glRotated(90,0,1,0);
         drawCylinderPart();
@@ -593,7 +504,7 @@ void drawingCylinder()
     {
         glPushMatrix();
 
-        glTranslatef(0,-cubeLengths,cubeLengths);
+        glTranslatef(0,-Length,Length);
         glRotatef(270, 0,0,1);
         drawCylinderPart();
 
@@ -601,7 +512,7 @@ void drawingCylinder()
     }
     {
         glPushMatrix();
-        glTranslatef(0,-cubeLengths,-cubeLengths);
+        glTranslatef(0,-Length,-Length);
         glRotatef(270, 0,0,1);
         glRotated(90,0,1,0);
         drawCylinderPart();
@@ -611,7 +522,7 @@ void drawingCylinder()
     }
     {
         glPushMatrix();
-        glTranslatef(-cubeLengths,cubeLengths,0);
+        glTranslatef(-Length,Length,0);
         glRotatef(180, 0,0,1);
         glRotatef(90, 1,0,0);
         drawCylinderPart();
@@ -620,7 +531,7 @@ void drawingCylinder()
     }
     {
         glPushMatrix();
-        glTranslatef(-cubeLengths,-cubeLengths,0);
+        glTranslatef(-Length,-Length,0);
         glRotatef(270, 0,0,1);
         glRotatef(90, 1,0,0);
         drawCylinderPart();
@@ -629,7 +540,7 @@ void drawingCylinder()
 
     }
     {
-        glTranslatef(cubeLengths,-cubeLengths,0);
+        glTranslatef(Length,-Length,0);
         glRotatef(-90, 0,0,1);
         glRotatef(90, 1,0,0);
         glRotated(90,0,1,0);
@@ -642,10 +553,10 @@ void drawingCylinder()
 
 
 }
-void drawProblem1()
+void drawProblem()
 {
     drawingCube();
-    drawingSpher();
+    drawingSphere();
     drawingCylinder();
 
 }
@@ -688,19 +599,8 @@ void display()
     /****************************
     / Add your objects from here
     ****************************/
-    //add objects
-
     drawAxes();
-
-    //glColor3f(1,0,0);
-
-    drawProblem1();
-
-
-
-
-
-    //ADD this line in the end --- if you use double buffer (i.e. GL_DOUBLE)
+    drawProblem();
     glutSwapBuffers();
 }
 
@@ -715,7 +615,7 @@ void init()
 {
     //codes for initialization
     drawaxes=1;
-    cubeLengths=20;
+    Length=20;
 
 
     //clear the screen
@@ -741,11 +641,11 @@ void init()
 int main(int argc, char **argv)
 {
     glutInit(&argc,argv);
-    glutInitWindowSize(500, 500);
+    glutInitWindowSize(600, 600);
     glutInitWindowPosition(0, 0);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGB);	//Depth, Double buffer, RGB color
 
-    glutCreateWindow("My OpenGL Program");
+    glutCreateWindow("Offline 1");
 
     init();
 
