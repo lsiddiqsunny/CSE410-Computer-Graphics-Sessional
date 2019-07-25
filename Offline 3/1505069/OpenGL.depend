@@ -1,0 +1,28 @@
+# depslib dependency file v1.0
+1564076551 source:d:\level 4 term 1\cse410-computer-graphics-sessional\offline 3\1505069\main.cpp
+	"header.h"
+
+1564076601 d:\level 4 term 1\cse410-computer-graphics-sessional\offline 3\1505069\header.h
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
+	<windows.h>
+	<glut.h>
+	<vector>
+	"bitmap_image.hpp"
+
+1392007564 d:\level 4 term 1\cse410-computer-graphics-sessional\offline 3\1505069\opengl\include\glut.h
+	<windows.h>
+	<GL/gl.h>
+	<GL/glu.h>
+
+1479975262 d:\level 4 term 1\cse410-computer-graphics-sessional\offline 3\1505069\bitmap_image.hpp
+	<algorithm>
+	<cmath>
+	<cstdlib>
+	<fstream>
+	<iostream>
+	<iterator>
+	<limits>
+	<string>
+

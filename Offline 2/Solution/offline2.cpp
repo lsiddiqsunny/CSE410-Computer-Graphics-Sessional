@@ -117,10 +117,17 @@ ostream& operator<< (ostream &ostrm, Vector const& v)
     for(int i=0; i<3; i++)
     {
 
-        fprintf(out,"%.7f ",v.point[i]);
+        fprintf(out,"%.7f",v.point[i]);
+        if(i<2){
+
+            fprintf(out," ");
+        }
+        else {
+            fprintf(out,"\n");
+        }
         //out<<v.point[i]<<" ";
     }
-    fprintf(out,"\n");
+    ///fprintf(out,"\n");
     return ostrm;
 }
 
