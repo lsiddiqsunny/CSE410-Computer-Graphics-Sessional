@@ -15,10 +15,9 @@
 #define SPECULAR 2
 #define REFLECTION 3
 
-#define REFINDEX 1.7
-#define pi (2*acos(0.0))
+#define pi (acos(-1.0))
 
-#define EPSILON 0.0000001
+#define eps 0.0000001
 using namespace std;
 
 struct point
@@ -100,7 +99,7 @@ struct Object
     }
 
     point reference_point;
-    double height, width, length, source_factor = 1.0;
+    double height, width, length;
     int Shine;
     double color[3];
     double co_efficients[4];
@@ -112,7 +111,7 @@ struct Object
     }
 
     virtual void draw() {}
-    virtual double getT(Ray* r)
+    virtual double getIntersectingT(Ray* r)
     {
         return -1;
     }
@@ -121,13 +120,14 @@ struct Object
         return -1;
     }
 
-    point getReflection(Ray *r, point pointed)
+    point getReflection(Ray *r, point normal)
     {
         point reflection;
-        double product=dotProduct(r->dir, pointed);
-        reflection.x = r->dir.x - pointed.x * 2.0 *product ;
-        reflection.y = r->dir.y - pointed.y * 2.0 * product;
-        reflection.z = r->dir.z - pointed.z * 2.0 * product;
+        ///r = a  -  2 ( a . n) n
+        double product=dotProduct(r->dir, normal);
+        reflection.x = r->dir.x - 2.0* normal.x * product ;
+        reflection.y = r->dir.y - 2.0 *normal.y * product;
+        reflection.z = r->dir.z - 2.0 *normal.z * product;
 
         return Normalized(reflection);
     }
@@ -153,6 +153,117 @@ struct Object
 
 };
 extern vector<Object*> objects;
+
+void Colouring(Object *obj,Ray *r, point* current_color,int level,double t)
+{
+    point intersection;
+    intersection.x = r->start.x + r->dir.x * t;
+    intersection.y = r->start.y + r->dir.y * t;
+    intersection.z = r->start.z + r->dir.z * t;
+
+
+    current_color->x = obj->color[0] * obj->co_efficients[AMBIENT];
+    current_color->y = obj->color[1] * obj->co_efficients[AMBIENT];
+    current_color->z = obj->color[2] * obj->co_efficients[AMBIENT];
+
+
+    point normal = obj->getNormal(intersection);
+    point reflection = obj->getReflection(r, normal);
+
+    for(int i = 0; i < lights.size(); i++)
+    {
+        point ldir;
+        ldir.x = lights[i].x - intersection.x;
+        ldir.y = lights[i].y - intersection.y;
+        ldir.z = lights[i].z - intersection.z;
+
+        double len = sqrt(ldir.x*ldir.x + ldir.y*ldir.y + ldir.z*ldir.z);
+        ldir = Normalized(ldir);
+
+        point lstart;
+        lstart.x = intersection.x + ldir.x;
+        lstart.y = intersection.y + ldir.y;
+        lstart.z = intersection.z + ldir.z;
+
+
+        Ray L(lstart, ldir);
+
+        bool obscured = false;
+
+        for(int j = 0; j < objects.size(); j++)
+        {
+            double possibleobscure = objects[j]->getIntersectingT(&L);
+            ///printf(",%f %d, ", possibleobscure, j);
+            if(possibleobscure > 0 && abs(possibleobscure) < len)
+            {
+                obscured = true;
+                break;
+            }
+        }
+        //printf("\n");
+
+        if(!obscured)
+        {
+            ///slide 22 from color
+            double lambert = obj->dotProduct(L.dir, normal);
+            double phong = obj->dotProduct(reflection, r->dir);
+
+            lambert = max(lambert,0.0) ;
+            phong = max(phong,0.0);
+
+            current_color->x +=  obj->color[0] * (lambert * obj->co_efficients[DIFFUSE] + pow(phong, obj->Shine) * obj->co_efficients[SPECULAR]);
+            current_color->y +=  obj->color[1] * (lambert * obj->co_efficients[DIFFUSE] + pow(phong, obj->Shine) * obj->co_efficients[SPECULAR]);
+            current_color->z +=  obj->color[2] * (lambert * obj->co_efficients[DIFFUSE] + pow(phong, obj->Shine) * obj->co_efficients[SPECULAR]);
+        }
+
+        if(level < recursion_level)
+        {
+            point rs;
+            rs.x = intersection.x + reflection.x ;
+            rs.y = intersection.y + reflection.y ;
+            rs.z = intersection.z + reflection.z ;
+
+            //reflection = Normalized(reflection);
+
+            Ray reflectionRay(rs, reflection);
+            int nearest = -1;
+
+            point reflectColor;
+            double t_min = 9999;
+            for(int k = 0; k < objects.size(); k++)
+            {
+                double t = objects[k]->getIntersectingT(&reflectionRay);
+
+                if(t <= 0)
+                    continue;
+                else if(t < t_min)
+                {
+                    t_min = t;
+                    nearest = k;
+                }
+            }
+
+            if(nearest != -1)
+            {
+                double t = objects[nearest]->intersect(&reflectionRay, &reflectColor, level + 1);
+                if(t != -1)
+                {
+                    current_color->x += reflectColor.x*obj->co_efficients[REFLECTION];
+                    current_color->y += reflectColor.y*obj->co_efficients[REFLECTION];
+                    current_color->z += reflectColor.z*obj->co_efficients[REFLECTION];
+                }
+
+            }
+        }
+
+        //Check whether all current_color pixel value is within 1 or 0 if not set it
+
+        current_color->x=max(0.0,min(current_color->x,1.0));
+        current_color->y=max(0.0,min(current_color->y,1.0));
+        current_color->z=max(0.0,min(current_color->z,1.0));
+    }
+
+}
 
 class Sphere: public Object
 {
@@ -208,7 +319,7 @@ public:
         }
     }
 
-    double getT(Ray* r)
+    double getIntersectingT(Ray* r)
     {
         point s;
         s.x = r->start.x - reference_point.x;
@@ -226,11 +337,17 @@ public:
         double t1 = (-B + sqrt(d)) / (2 * A);
         double t2 = (-B - sqrt(d)) / (2 * A);
 
-        return t1<t2?t1:t2;
+        if(t1<t2)
+        {
+            return t1;
+        }
+        else
+            return t2;
     }
 
     point getNormal(point pointed)
     {
+        ///slide 35
         point normal;
         normal.x = pointed.x - reference_point.x;
         normal.y = pointed.y - reference_point.y;
@@ -243,134 +360,17 @@ public:
 
     double intersect(Ray *r,point* current_color, int level)
     {
-        //printf("%f %f %f ", r->dir.x, r->dir.y, r->dir.z);
 
-        double t = getT(r);
+        double t = getIntersectingT(r);
 
-        //printf("here0\n");
         if(t <= 0)
             return -1;
 
-        //printf("here1\n");
         if(level == 0)
             return t;
 
-        //printf("here2\n");
-        point intersection;
-        intersection.x = r->start.x + r->dir.x * t;
-        intersection.y = r->start.y + r->dir.y * t;
-        intersection.z = r->start.z + r->dir.z * t;
-
-        current_color->x = color[0] * co_efficients[AMBIENT];
-        current_color->y = color[1] * co_efficients[AMBIENT];
-        current_color->z = color[2] * co_efficients[AMBIENT];
-
-        point normal = getNormal(intersection);
-        point reflection = getReflection(r, normal);
-
-        for(int i = 0; i < lights.size(); i++)
-        {
-            point ldir;
-            ldir.x = lights[i].x - intersection.x;
-            ldir.y = lights[i].y - intersection.y;
-            ldir.z = lights[i].z - intersection.z;
-
-            double len = sqrt(pow(ldir.x,2) + pow(ldir.y,2) + pow(ldir.z,2));
-            ldir = Normalized(ldir);
-
-            point lstart;
-            lstart.x = intersection.x + ldir.x * 1.0;
-            lstart.y = intersection.y + ldir.y * 1.0;
-            lstart.z = intersection.z + ldir.z * 1.0;
-
-
-            Ray L(lstart, ldir);
-
-            bool obscured = false;
-
-            for(int j = 0; j < objects.size(); j++)
-            {
-                double possibleobscure = objects[j]->getT(&L);
-                //printf(",%f %d, ", possibleobscure, j);
-                if(possibleobscure > 0 && abs(possibleobscure) < len)
-                {
-                    obscured = true;
-                    break;
-                }
-            }
-            //printf("\n");
-
-            if(!obscured)
-            {
-                //printf("direct");
-                //L.dir.x = -L.dir.x;
-                //L.dir.y = -L.dir.y;
-                //L.dir.z = -L.dir.z;
-                double lambert = dotProduct(L.dir, normal);
-                double phong = dotProduct(reflection, r->dir)/2;
-
-                lambert = lambert > 0?lambert:0;
-                phong = phong > 0?phong:0;
-
-                current_color->x += source_factor * color[0] * (lambert * co_efficients[DIFFUSE] + pow(phong, Shine) * co_efficients[SPECULAR]);
-                current_color->y += source_factor * color[1] * (lambert * co_efficients[DIFFUSE] + pow(phong, Shine) * co_efficients[SPECULAR]);
-                current_color->z += source_factor * color[2] * (lambert * co_efficients[DIFFUSE] + pow(phong, Shine) * co_efficients[SPECULAR]);
-            }
-
-            if(level < recursion_level)
-            {
-                point rs;
-                rs.x = intersection.x + reflection.x * 1.0;
-                rs.y = intersection.y + reflection.y * 1.0;
-                rs.z = intersection.z + reflection.z * 1.0;
-
-                //reflection = Normalized(reflection);
-
-                Ray reflectionRay(rs, reflection);
-                int nearest = -1;
-
-                point reflectColor;
-                double t_min = 9999;
-                for(int k = 0; k < objects.size(); k++)
-                {
-                    double t = objects[k]->getT(&reflectionRay);
-
-                    if(t <= 0)
-                        continue;
-                    else if(t < t_min)
-                    {
-                        t_min = t;
-                        nearest = k;
-                    }
-                }
-
-                if(nearest != -1)
-                {
-                    double t = objects[nearest]->intersect(&reflectionRay, &reflectColor, level + 1);
-                    if(t != -1)
-                    {
-                        current_color->x += reflectColor.x*co_efficients[REFLECTION];
-                        current_color->y += reflectColor.y*co_efficients[REFLECTION];
-                        current_color->z += reflectColor.z*co_efficients[REFLECTION];
-                    }
-
-                }
-            }
-
-            //Check whether all current_color pixel value is within 1 or 0 if not set it
-            if(current_color->x > 1)
-                current_color->x = 1;
-            if(current_color->x < 0)
-                current_color->x = 0;
-            if(current_color->y > 1)
-                current_color->y = 1;
-            if(current_color->y < 0)
-                current_color->y = 0;
-            if(current_color->z > 1)
-                current_color->z = 1;
-            if(current_color->z < 0)
-                current_color->z = 0;
-        }
+        /// P(t)=ro+t*rd
+        Colouring(this,r,current_color,level,t);
 
         return t;
     }
@@ -380,12 +380,10 @@ class Floor: public Object
 {
 public:
 
-    int isSquare=0;
     Floor(point p,double base)
     {
         reference_point=p;
         length=base;
-        isSquare=1;
 
     }
 
@@ -396,29 +394,28 @@ public:
         reference_point.z = 0;
         length = tile_width;
         height = 0;
-        isSquare=0;
 
     }
 
 
     point getNormal(point pointed)
     {
-        point normal;
-        normal.x = 0;
-        normal.y = 0;
-        normal.z = 1;
-        return normal;
+        pointed.x = 0;
+        pointed.y = 0;
+        pointed.z = 1;
+        return pointed;
     }
 
-    double getT(Ray *r)
+    double getIntersectingT(Ray *r)
     {
+        ///
         point normal = getNormal(reference_point);
         return ((-1.0) * dotProduct(normal, r->start) / dotProduct(normal, r->dir));
     }
 
     double intersect(Ray *r, point* current_color, int level)
     {
-        double t = getT(r);
+        double t = getIntersectingT(r);
 
         point intersection;
         intersection.x = r->start.x + r->dir.x * t;
@@ -434,151 +431,22 @@ public:
 
         int x = (intersection.x - reference_point.x) / length;
         int y = (intersection.y - reference_point.y) / length;
-        if(isSquare==0)
+
+        if((x + y) % 2 == 0)
         {
-            if((x + y) % 2 == 0)
-            {
-                color[0] = color[1] = color[2] = 0;
-            }
-            else
-            {
-                color[0] = color[1] = color[2] = 1;
-            }
+            color[0] = color[1] = color[2] = 0;
+        }
+        else
+        {
+            color[0] = color[1] = color[2] = 1;
         }
 
 
-        current_color->x = color[0] * co_efficients[AMBIENT] ;
-        current_color->y = color[1] * co_efficients[AMBIENT] ;
-        current_color->z = color[2] * co_efficients[AMBIENT] ;
-
-        point normal = getNormal(intersection);
-        point reflection = getReflection(r, normal);
-
-        for(int i = 0; i < lights.size(); i++)
-        {
-            point ldir;
-            ldir.x = lights[i].x - intersection.x;
-            ldir.y = lights[i].y - intersection.y;
-            ldir.z = lights[i].z - intersection.z;
-
-            double len = sqrt(pow(ldir.x,2) + pow(ldir.y,2) + pow(ldir.z,2));
-
-            ldir = Normalized(ldir);
-
-            point lstart;
-            lstart.x = intersection.x + ldir.x * 1.0;
-            lstart.y = intersection.y + ldir.y * 1.0;
-            lstart.z = intersection.z + ldir.z * 1.0;
-
-            Ray L(lstart, ldir);
-
-            bool obscured = false;
-
-            for(int j = 0; j < objects.size(); j++)
-            {
-                double possibleobscure = objects[j]->getT(&L);
-                //printf("%f ", possibleobscure);
-                if(possibleobscure > 0 && abs(possibleobscure) < len)
-                {
-                    obscured = true;
-                    break;
-                }
-            }
-            //printf("\n");
-
-            if(!obscured)
-            {
-                //printf("direct");
-                //L.dir.x = -L.dir.x;
-                //L.dir.y = -L.dir.y;
-                //L.dir.z = -L.dir.z;
-                double lambert = dotProduct(L.dir, normal);
-                //double phong = dotProduct(reflection, r->dir);
-                point oppo;
-                oppo.x = -r->dir.x;
-                oppo.y = -r->dir.y;
-                oppo.z = -r->dir.z;
-                double phong = dotProduct(getReflection(&L, normal), oppo);
-                //if(lambert > 0 || phong > 0) printf("emon to hobar kotha na\n");
-                lambert = lambert > 0?lambert:0;
-                phong = phong > 0?phong:0;
-
-                current_color->x += source_factor * color[0] * (lambert * co_efficients[DIFFUSE] + pow(phong, Shine) * co_efficients[SPECULAR]);
-                current_color->y += source_factor * color[1] * (lambert * co_efficients[DIFFUSE] + pow(phong, Shine) * co_efficients[SPECULAR]);
-                current_color->z += source_factor * color[2] * (lambert * co_efficients[DIFFUSE] + pow(phong, Shine) * co_efficients[SPECULAR]);
-            }
-
-            if(level < recursion_level)
-            {
-                point rs;
-                rs.x = intersection.x + reflection.x * 1.0;
-                rs.y = intersection.y + reflection.y * 1.0;
-                rs.z = intersection.z + reflection.z * 1.0;
-
-                //reflection = Normalized(reflection);
-
-                Ray reflectionRay(rs, reflection);
-                int nearest = -1;
-
-                point reflectColor;
-                double t_min = 9999;
-                for(int k = 0; k < objects.size(); k++)
-                {
-                    double t = objects[k]->getT(&reflectionRay);
-
-                    if(t <= 0)
-                        continue;
-                    else if(t < t_min)
-                    {
-                        t_min = t;
-                        nearest = k;
-                    }
-                }
-
-                if(nearest != -1)
-                {
-                    double t = objects[nearest]->intersect(&reflectionRay, &reflectColor, level + 1);
-                    if(t!=-1)
-                    {
-                        current_color->x += reflectColor.x*co_efficients[REFLECTION];
-                        current_color->y += reflectColor.y*co_efficients[REFLECTION];
-                        current_color->z += reflectColor.z*co_efficients[REFLECTION];
-                    }
-                }
-            }
-
-            //Check whether all current_color pixel value is within 1 or 0 if not set it
-            if(current_color->x > 1)
-                current_color->x = 1;
-            if(current_color->x < 0)
-                current_color->x = 0;
-            if(current_color->y > 1)
-                current_color->y = 1;
-            if(current_color->y < 0)
-                current_color->y = 0;
-            if(current_color->z > 1)
-                current_color->z = 1;
-            if(current_color->z < 0)
-                current_color->z = 0;
-        }
-
+        Colouring(this,r,current_color,level,t);
         return t;
     }
 
-    void draw1()
-    {
 
-        glColor3f(color[0], color[1], color[2]);
-        glBegin(GL_QUADS);
-        {
-            glVertex3f( reference_point.x, reference_point.y,reference_point.z);
-            glVertex3f( reference_point.x+length, reference_point.y,reference_point.z);
-            glVertex3f( reference_point.x+length, reference_point.y+length,reference_point.z);
-            glVertex3f( reference_point.x, reference_point.y+length,reference_point.z);
-        }
-        glEnd();
-
-    }
     void draw()
     {
         point temp = reference_point;
@@ -639,6 +507,7 @@ public:
 
     point getNormal(point pointed)
     {
+        point normal;
         point u, v;
         u.x = b.x - a.x;
         u.y = b.y - a.y;
@@ -647,8 +516,8 @@ public:
         v.x = c.x - a.x;
         v.y = c.y - a.y;
         v.z = c.z - a.z;
-        point normal = crossProduct(u, v);
-        normal = Normalized(normal);
+        normal = crossProduct(u, v);
+        normal = Normalized(normal );
 
         if(dotProduct(pointed, normal) > 0)
         {
@@ -660,8 +529,9 @@ public:
         return normal;
     }
 
-    double getT(Ray *r)
+    double getIntersectingT(Ray *r)
     {
+        ///https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
         point edge1, edge2;
         edge1.x = b.x - a.x;
         edge1.y = b.y - a.y;
@@ -676,7 +546,7 @@ public:
 
         point h = crossProduct(tempodir, edge2);
         double aa = dotProduct(edge1, h);
-        if(aa > -EPSILON && aa < EPSILON)
+        if(aa > -eps && aa < eps)
         {
             return -1;
         }
@@ -697,7 +567,7 @@ public:
             return -1;
 
         double t = f * dotProduct(edge2, q);
-        if(t > EPSILON)
+        if(t > eps)
             return t;
 
         return -1;
@@ -706,7 +576,7 @@ public:
 
     double intersect(Ray *r, point* current_color, int level)
     {
-        double t = getT(r);
+        double t = getIntersectingT(r);
         if(t<=0)
         {
             return -1;
@@ -716,123 +586,7 @@ public:
             return t;
         }
 
-        point intersection;
-        intersection.x = r->start.x + r->dir.x * t;
-        intersection.y = r->start.y + r->dir.y * t;
-        intersection.z = r->start.z + r->dir.z * t;
-
-        current_color->x = color[0] * co_efficients[AMBIENT];
-        current_color->y = color[1] * co_efficients[AMBIENT];
-        current_color->z = color[2] * co_efficients[AMBIENT];
-
-
-        point normal = getNormal(r->dir);
-        point reflection = getReflection(r, normal);
-
-        for(int i = 0; i < lights.size(); i++)
-        {
-            point ldir;
-            ldir.x = lights[i].x - intersection.x;
-            ldir.y = lights[i].y - intersection.y;
-            ldir.z = lights[i].z - intersection.z;
-
-            double len = sqrt(pow(ldir.x,2) + pow(ldir.y,2) + pow(ldir.z,2));
-            ldir = Normalized(ldir);
-
-            point lstart;
-            lstart.x = intersection.x + ldir.x * 1.0;
-            lstart.y = intersection.y + ldir.y * 1.0;
-            lstart.z = intersection.z + ldir.z * 1.0;
-
-
-            Ray L(lstart, ldir);
-
-            bool obscured = false;
-
-            for(int j = 0; j < objects.size(); j++)
-            {
-                double possibleobscure = objects[j]->getT(&L);
-                //printf(",%f %d, ", possibleobscure, j);
-                if(possibleobscure > 0 && abs(possibleobscure) <= len)
-                {
-                    obscured = true;
-                    break;
-                }
-            }
-            //printf("\n");
-
-            if(!obscured)
-            {
-                //printf("direct");
-
-                double lambert = dotProduct(L.dir, normal);
-                double phong = dotProduct(reflection, r->dir);
-
-                //if(lambert > 0 || phong > 0) printf("emon to hobar kotha na\n");
-                lambert = lambert > 0?lambert:0;
-                phong = phong > 0?phong:0;
-
-                current_color->x += source_factor * color[0] * (lambert * co_efficients[DIFFUSE] + pow(phong, Shine) * co_efficients[SPECULAR]);
-                current_color->y += source_factor * color[1] * (lambert * co_efficients[DIFFUSE] + pow(phong, Shine) * co_efficients[SPECULAR]);
-                current_color->z += source_factor * color[2] * (lambert * co_efficients[DIFFUSE] + pow(phong, Shine) * co_efficients[SPECULAR]);
-            }
-
-            if(level < recursion_level)
-            {
-                point rs;
-                rs.x = intersection.x + reflection.x * 1.0;
-                rs.y = intersection.y + reflection.y * 1.0;
-                rs.z = intersection.z + reflection.z * 1.0;
-
-                //reflection = Normalized(reflection);
-
-                Ray reflectionRay(rs, reflection);
-                int nearest = -1;
-
-                point reflectColor;
-                double t_min = 9999;
-                for(int k = 0; k < objects.size(); k++)
-                {
-                    double t = objects[k]->getT(&reflectionRay);
-
-                    if(t <= 0)
-                        continue;
-                    else if(t < t_min)
-                    {
-                        t_min = t;
-                        nearest = k;
-                    }
-                }
-
-                if(nearest != -1)
-                {
-                    double t = objects[nearest]->intersect(&reflectionRay, &reflectColor, level + 1);
-                    if(t != -1)
-                    {
-                        current_color->x += reflectColor.x*co_efficients[REFLECTION];
-                        current_color->y += reflectColor.y*co_efficients[REFLECTION];
-                        current_color->z += reflectColor.z*co_efficients[REFLECTION];
-                    }
-
-
-                }
-            }
-
-            //Check whether all current_color pixel value is within 1 or 0 if not set it
-            if(current_color->x > 1)
-                current_color->x = 1;
-            if(current_color->x < 0)
-                current_color->x = 0;
-            if(current_color->y > 1)
-                current_color->y = 1;
-            if(current_color->y < 0)
-                current_color->y = 0;
-            if(current_color->z > 1)
-                current_color->z = 1;
-            if(current_color->z < 0)
-                current_color->z = 0;
-        }
-
+        Colouring(this,r,current_color,level,t);
         return t;
     }
 };
@@ -848,7 +602,6 @@ public:
     point p5;
     double base,height;
     vector<Triangle*>triangle;
-    Floor *square;
 
     Pyramid(point p,double b,double h)
     {
@@ -871,6 +624,7 @@ public:
         p5.y=p1.y+base/2;
         p5.z=p1.z+height;
 
+
         Triangle *t ;
         t =new Triangle(p1,p5,p2);
         triangle.push_back(t);
@@ -882,14 +636,19 @@ public:
         t =new Triangle(p4,p5,p1);
         triangle.push_back(t);
 
-        square=new Floor(p,base);
+        t =new Triangle(p1,p2,p4);
+        triangle.push_back(t);
+
+        t =new Triangle(p2,p3,p4);
+        triangle.push_back(t);
+
 
 
 
 
 
     }
-    double getT(Ray* r)
+    double getIntersectingT(Ray* r)
     {
         for(int i=0; i<triangle.size(); i++)
         {
@@ -900,7 +659,7 @@ public:
         double t_min = 9999;
         for(int i=0; i<triangle.size(); i++)
         {
-            double t=triangle[i]->getT(r);
+            double t=triangle[i]->getIntersectingT(r);
             /// cout<<t<<endl;
             if(t <= 0)
                 continue;
@@ -909,14 +668,7 @@ public:
                 t_min=t;
             }
         }
-        double t=square->getT(r);
-        /// cout<<t<<endl;
-        if(t <= 0)
-            return t_min;
-        if(t<t_min)
-        {
-          //  t_min=t;
-        }
+
 
         return t_min;
 
@@ -930,11 +682,7 @@ public:
             triangle[i]->setCoEfficients(this->co_efficients[0],this->co_efficients[1],this->co_efficients[2],this->co_efficients[3]);
             triangle[i]->setShine(this->Shine);
         }
-        square->setColor(this->color[0], this->color[1], this->color[2]);
-        square->setCoEfficients(this->co_efficients[0],this->co_efficients[1],this->co_efficients[2],this->co_efficients[3]);
-        square->setShine(this->Shine);
 
-        square->draw1();
         for(int i=0; i<triangle.size(); i++)
         {
             triangle[i]->draw();
@@ -949,10 +697,6 @@ public:
             triangle[i]->setCoEfficients(this->co_efficients[0],this->co_efficients[1],this->co_efficients[2],this->co_efficients[3]);
             triangle[i]->setShine(this->Shine);
         }
-
-        square->setColor(this->color[0], this->color[1], this->color[2]);
-        square->setCoEfficients(this->co_efficients[0],this->co_efficients[1],this->co_efficients[2],this->co_efficients[3]);
-        square->setShine(this->Shine);
         double t_min = 9999;
         for(int i=0; i<triangle.size(); i++)
         {
@@ -963,14 +707,6 @@ public:
             {
                 t_min=t;
             }
-        }
-
-        double t=square->intersect(r,current_color,level);
-        if(t <= 0)
-            return t_min;
-        if(t<t_min)
-        {
-           // t_min=t;
         }
         return t_min;
 

@@ -69,20 +69,25 @@ void drawGrid()
 }
 void capture()
 {
+    ///https://drive.google.com/file/d/1vRfbGWh2rH43bQVk61SWv31X1VU9F4Tl/view?usp=sharing
     bitmap_image bitmap_image(image_width, image_height);
+
+
+    ///tan(FOV/2)=(distance/(window_hight/2.0))
     double plane_distance = (window_height/2.0)/tan((FOV/2.0) * (pi / 180.0));
 
+    ///get the topleft point of the view plane :  eye->l->r->u
     point topleft;
     topleft.x = pos.x + l.x * plane_distance - r.x * (window_width/2.0) + u.x * (window_height/2.0);
     topleft.y = pos.y + l.y * plane_distance - r.y * (window_width/2.0) + u.y * (window_height/2.0);
     topleft.z = pos.z + l.z * plane_distance - r.z * (window_width/2.0) + u.z * (window_height/2.0);
 
-    //printf("topleft is %f, %f, %f\n", topleft.x, topleft.y, topleft.z);
+    ///printf("topleft is %f, %f, %f\n", topleft.x, topleft.y, topleft.z);
 
     double du = (1.0*window_width)/image_width;
     double dv = (1.0*window_height)/image_height;
 
-    //cout<<du<<" "<<dv<<endl;
+    ///cout<<du<<" "<<dv<<endl;
 
     //ofstream fout("corners.txt");
     for(int i = 0; i < image_height; i++)
@@ -90,18 +95,21 @@ void capture()
         for(int j = 0; j < image_width; j++)
         {
             //printf("%d ", i*j);
-            struct point corner;
+            point corner;
+            /// get current view point
             corner.x = topleft.x + r.x * j * du - u.x * i * dv;
             corner.y = topleft.y + r.y * j * du - u.y * i * dv;
             corner.z = topleft.z + r.z * j * du - u.z * i * dv;
 
             //fout<<corner.x<<", "<<corner.y<<", "<<corner.z<<endl;
-            struct point diff;
+            point diff;
             diff.x = corner.x - pos.x;
             diff.y = corner.y - pos.y;
             diff.z = corner.z - pos.z;
 
             diff = Normalized(diff);
+
+            /// create ray from the eye to view point
             Ray newRay(pos, diff);
 
             //printf("%f %f %f\n", diff2.x, diff2.y, diff2.z);
@@ -124,10 +132,9 @@ void capture()
 
             if(nearest != -1)
             {
-                //cout<<"not inside yet"<<endl;
                 double t = objects[nearest]->intersect(&newRay, &dummyColor, 1);
 
-                //if(dummyColor.x == 1) printf("                          yes");
+                /// update pixel with nearest intersection
                 bitmap_image.set_pixel(j, i, dummyColor.x * 255, dummyColor.y * 255, dummyColor.z * 255);
             }
         }
@@ -135,7 +142,6 @@ void capture()
 
     bitmap_image.save_image("out.bmp");
     cout<<"Image captured"<<endl;
-    // exit(0);
 }
 
 
@@ -314,7 +320,7 @@ void display()
     for(int i = 0; i < lights.size(); i++)
     {
         glBegin(GL_POINTS);
-        glColor3f(1, 1, 1);
+        glColor3f(255, 255, 255);
         glVertex3f(lights[i].x, lights[i].y, lights[i].z);
         glEnd();
     }
@@ -349,14 +355,14 @@ void init()
     glLoadIdentity();
 
     //give PERSPECTIVE parameters
-    gluPerspective(80,	1,	1,	1000.0);
+    gluPerspective(90,	1,	1,	1000.0);
     //field of view in the Y (vertically)
     //aspect ratio that determines the field of view in the X direction (horizontally)
     //near distance
     //far distance
 }
 
-void loadActualData()
+void loadData()
 {
     ifstream fin("description.txt");
     fin>>recursion_level;
@@ -375,7 +381,7 @@ void loadActualData()
         string str;
         fin>>str;
         //cout<<str<<endl;
-        if(str.compare("sphere") == 0 || str.compare("Sphere") == 0)
+        if(str.compare("sphere") == 0)
         {
             struct point center;
             double radius;
@@ -397,7 +403,7 @@ void loadActualData()
             temp->setShine(shine);
             objects.push_back(temp);
         }
-        else if(str.compare("pyramid") == 0 || str.compare("pyramid") == 0)
+        else if(str.compare("pyramid") == 0)
         {
             point p;
 
@@ -436,82 +442,11 @@ void loadActualData()
     temp->setShine(1);
     objects.push_back(temp);
 }
-void loadTestData()
-{
-    image_width = image_height = 768;
-    recursion_level = 4;
-
-    Object *temp;
-    struct point C;
-    double R;
-    C.x = 10;
-    C.y = 50;
-    C.z = 10;
-    R = 10.0;
-    temp = new Sphere(C, R);
-    temp->setColor(1, 0, 0);
-    temp->setCoEfficients(0.4, 0.2, 0.2, 0.2);
-    temp->setShine(1);
-
-    objects.push_back(temp);
-
-    struct point light1;
-    light1.x = -30;
-    light1.y = 20;
-    light1.z = 20;
-    lights.push_back(light1);
-
-    /*light1.x = -60;
-    light1.y = -20;
-    light1.z = 10;
-    lights.push_back(light1);*/
-
-    C.x = -60;
-    C.y = 15;
-    C.z = 25;
-    R = 25.0;
-    temp = new Sphere(C, R);
-    temp->setColor(1, 1, 0);
-    temp->setCoEfficients(0.4, 0.2, 0.2, 0.2);
-    temp->setShine(1);
-
-    objects.push_back(temp);
-
-    struct point a, b, c;
-    a.x = -40, a.y = -40, a.z = 0;
-    b.x = 40, b.y = -40, b.z = 0;
-    c.x = 0, c.y = -40, c.z = 40;
-
-    temp = new Triangle(a, b, c);
-    temp->setColor(0, 1, 0);
-    temp->setCoEfficients(0.4, 0.2, 0.2, 0.2);
-    temp->setShine(1);
-    objects.push_back(temp);
-
-    temp = new Floor(1000, 20);
-    temp->setCoEfficients(0.4, 0.2, 0.2, 0.2);
-    temp->setShine(1);
-    objects.push_back(temp);
-
-    struct point r;
-    r.x = 0;
-    r.y = 0;
-    r.z = 0;
-
-    /*temp = new generalQuadratic(1, 1, 1, 0, 0, 0, 0, 0, 0, -100, r, 0, 0, 20);
-    temp->setColor(0, 1, 0);
-    temp->setCoEfficients(0.4, 0.2, 0.1, 0.3);
-    temp->setShine(10);
-    objects.push_back(temp);*/
-
-
-}
 int main(int argc, char **argv)
 {
-     //loadTestData();
-    loadActualData();
+    loadData();
     glutInit(&argc,argv);
-    glutInitWindowSize(600, 600);
+    glutInitWindowSize(window_height, window_width);
     glutInitWindowPosition(0, 0);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGB);	//Depth, Double buffer, RGB color
 
